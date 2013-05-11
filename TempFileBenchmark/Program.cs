@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using Common.Logging;
 
@@ -12,10 +13,10 @@ namespace TempFileBenchmark
     private static void Main( string[] args )
     {
       Console.WindowWidth = 120;
-
-      Log.Info( "Generating random strings." );
-
-      var testSettings = new List<Program.TestSetting>
+      string directory = ConfigurationManager.AppSettings[ "directory" ];
+      CheckEnvironment( directory );
+      
+      var testSettings = new List<TestSetting>
         {
           new TestSetting( 1000, 1*1024 ), new TestSetting( 1000, 2*1024 ), new TestSetting( 1000, 4*1024 ),
           new TestSetting( 1000, 8*1024 ), new TestSetting( 1000, 16*1024 ), new TestSetting( 1000, 32*1024 ),
@@ -23,14 +24,15 @@ namespace TempFileBenchmark
           new TestSetting( 10000, 8*1024 ), new TestSetting( 10000, 16*1024 ), new TestSetting( 10000, 32*1024 )
         };
 
+      
+      var fileSystemRunner = new FileSystemRunner( directory );
+      var esentRunner = new EsentRunner( directory );
+
       var program = new Program();
-      var fileSystemRunner = new FileSystemRunner();
-      var esentRunner = new EsentRunner();
       foreach( var testSetting in testSettings )
       {
-        Log.Info( string.Format( "Starting test with size '{0}' and amount '{1}'.", testSetting.Size, testSetting.Amount ) );
+        Log.Info( string.Format( "Starting test with size '{0}' bytes and '{1}' runs.", testSetting.Size, testSetting.Runs ) );
 
-        // Generate n of strings of size x
         var sampleData = program.GetSampleData( testSetting );
 
         var timedActionForFileSystem = new TimedAction( "FileSystem" );
@@ -46,11 +48,19 @@ namespace TempFileBenchmark
       Console.ReadKey();
     }
 
-    private Dictionary<string, string> GetSampleData( Program.TestSetting testSetting )
+    private static void CheckEnvironment( string directory )
+    {
+      if( !Directory.Exists( directory ) )
+      {
+        throw new ArgumentException( "The configured directory is not accessible. Check your application.config file." );
+      }
+    }
+
+    private Dictionary<string, string> GetSampleData( TestSetting testSetting )
     {
       var randomBytesGenerator = new RandomBytesGenerator();
-      var sampleData = new Dictionary<string, string>( testSetting.Amount );
-      for( int i = 0; i < testSetting.Amount; i++ )
+      var sampleData = new Dictionary<string, string>( testSetting.Runs );
+      for( int i = 0; i < testSetting.Runs; i++ )
       {
         sampleData.Add( Guid.NewGuid().ToString(), randomBytesGenerator.GetRandomAscii( testSetting.Size ) );
       }
@@ -59,12 +69,12 @@ namespace TempFileBenchmark
 
     private class TestSetting
     {
-      private readonly int m_Amount;
+      private readonly int m_Runs;
       private readonly int m_Size;
 
-      public TestSetting( int amount, int size )
+      public TestSetting( int runs, int size )
       {
-        m_Amount = amount;
+        m_Runs = runs;
         m_Size = size;
       }
 
@@ -76,11 +86,11 @@ namespace TempFileBenchmark
         }
       }
 
-      public int Amount
+      public int Runs
       {
         get
         {
-          return m_Amount;
+          return m_Runs;
         }
       }
     }

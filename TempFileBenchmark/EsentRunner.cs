@@ -6,8 +6,12 @@ namespace TempFileBenchmark
 {
   internal class EsentRunner
   {
-    private const string Directory = @"C:\Temp\";
-    private readonly PersistentDictionary<string, string> m_PersistentDictionary = CreatePersistentDictionary();
+    private readonly PersistentDictionary<string, string> m_PersistentDictionary;
+
+    public EsentRunner( string directory )
+    {
+      m_PersistentDictionary = CreatePersistentDictionary( directory );
+    }
 
     public void Run( IDictionary<string, string> sampleData )
     {
@@ -17,7 +21,7 @@ namespace TempFileBenchmark
         string id = data.Key;
         m_PersistentDictionary.Add( id, data.Value );
       }
-      
+
       foreach( var data in sampleData )
       {
         String storedValue;
@@ -30,14 +34,13 @@ namespace TempFileBenchmark
       }
     }
 
-    private static PersistentDictionary<string, string> CreatePersistentDictionary()
+    private PersistentDictionary<string, string> CreatePersistentDictionary( string directory )
     {
-      if( PersistentDictionaryFile.Exists( Directory ) )
+      if( PersistentDictionaryFile.Exists( directory ) )
       {
-        PersistentDictionaryFile.DeleteFiles( Directory );
+        PersistentDictionaryFile.DeleteFiles( directory );
       }
-      var persistentDictionary = new PersistentDictionary<string, string>( Directory );
-      return persistentDictionary;
+      return new PersistentDictionary<string, string>( directory );
     }
   }
 }
