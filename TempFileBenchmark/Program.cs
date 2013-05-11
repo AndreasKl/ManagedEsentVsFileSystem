@@ -13,9 +13,7 @@ namespace TempFileBenchmark
     {
       Console.WindowWidth = 120;
 
-      Log.Info( "Generating random strings." );
-
-      var testSettings = new List<Program.TestSetting>
+      var testSettings = new List<TestSetting>
         {
           new TestSetting( 1000, 1*1024 ), new TestSetting( 1000, 2*1024 ), new TestSetting( 1000, 4*1024 ),
           new TestSetting( 1000, 8*1024 ), new TestSetting( 1000, 16*1024 ), new TestSetting( 1000, 32*1024 ),
@@ -26,11 +24,15 @@ namespace TempFileBenchmark
       var program = new Program();
       var fileSystemRunner = new FileSystemRunner();
       var esentRunner = new EsentRunner();
+      
       foreach( var testSetting in testSettings )
       {
-        Log.Info( string.Format( "Starting test with size '{0}' and amount '{1}'.", testSetting.Size, testSetting.Amount ) );
+        Log.Info( 
+          string.Format( 
+            "Starting test with size '{0}' and amount '{1}'.", 
+            testSetting.Size, 
+            testSetting.Amount ) );
 
-        // Generate n of strings of size x
         var sampleData = program.GetSampleData( testSetting );
 
         var timedActionForFileSystem = new TimedAction( "FileSystem" );
@@ -46,7 +48,7 @@ namespace TempFileBenchmark
       Console.ReadKey();
     }
 
-    private Dictionary<string, string> GetSampleData( Program.TestSetting testSetting )
+    private Dictionary<string, string> GetSampleData( TestSetting testSetting )
     {
       var randomBytesGenerator = new RandomBytesGenerator();
       var sampleData = new Dictionary<string, string>( testSetting.Amount );
